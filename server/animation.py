@@ -36,17 +36,9 @@ class Animator:
   def event_ready(self) -> threading.Event:
     return self._event_ready
 
-  def mark_offline(self) -> None:
-    self._modified = True
-    self._offline = True
-
-  def replace_image(self, image: Image.Image) -> None:
-    """Replaces the full (uncropped) image."""
-    self._modified = True
-    self._image = image
-    self._offline = False
-    self._vertical_scroll %= self._image.height
-    self._event_ready.set()
+  @property
+  def modified(self) -> bool:
+    return self._modified
 
   @property
   def frame(self) -> Image.Image:
@@ -68,6 +60,18 @@ class Animator:
                          self._frame.height - self._offline_icon.height))
 
     return self._frame
+
+  def mark_offline(self) -> None:
+    self._modified = True
+    self._offline = True
+
+  def replace_image(self, image: Image.Image) -> None:
+    """Replaces the full (uncropped) image."""
+    self._modified = True
+    self._image = image
+    self._offline = False
+    self._vertical_scroll %= self._image.height
+    self._event_ready.set()
 
   def start(self) -> None:
     _logger.info('Starting scrolling animation')

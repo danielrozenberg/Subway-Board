@@ -34,20 +34,18 @@ if __name__ == "__main__":
             break
           stf.write(data)
         s.close()
+
+        if not stf.tell():
+          time.sleep(0.01)
+          continue
+
+        stf.seek(0)
+        image = Image.open(stf)
+        canvas = matrix.CreateFrameCanvas()
+        canvas.SetImage(image)
+        matrix.SwapOnVSync(canvas)
       except (ConnectionRefusedError, OSError):
         for x, y in itertools.product(range(matrix.width - 4, matrix.width),
                                       range(matrix.height - 4, matrix.height)):
           matrix.SetPixel(x, y, *_ERROR_COLOR)
         time.sleep(1)
-        continue
-
-      stf.seek(0)
-      new_image = Image.open(stf)
-      if new_image.tobytes() == image.tobytes():
-        time.sleep(0.01)
-        continue
-
-      image = new_image
-      canvas = matrix.CreateFrameCanvas()
-      canvas.SetImage(image)
-      matrix.SwapOnVSync(canvas)

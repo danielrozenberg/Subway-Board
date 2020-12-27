@@ -32,7 +32,9 @@ class Server:
       while True:
         conn, _ = s.accept()
         with conn:
+          if not self._animator.modified:
+            continue
+
           with tempfile.SpooledTemporaryFile(mode='w+b') as stf:
             self._animator.frame.save(stf, 'PNG')
             conn.sendfile(stf)
-          conn.close()
