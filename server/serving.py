@@ -1,12 +1,14 @@
 """Socket server."""
 
+import logging
 import socket
-import tempfile
 import threading
 
 import animation
 
 _PORT = 7829
+
+_logger = logging.getLogger('subway_board.serving')
 
 
 class Server:
@@ -17,7 +19,10 @@ class Server:
     self._animator = animator
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+      _logger.info('Verifying that the socket can be bound to port %d...',
+                   self._port)
       s.bind(('0.0.0.0', self._port))
+      _logger.info('... verified!')
 
   def start(self) -> None:
     """Starts the socket server in a background thread."""
@@ -26,15 +31,30 @@ class Server:
   def _start(self) -> None:
     """Serves the current frame on any socket connection."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+      _logger.info('Listening on port %d', self._port)
       s.bind(('0.0.0.0', self._port))
       s.listen()
-      self._animator.event_ready.wait()
-      while True:
-        conn, _ = s.accept()
-        with conn:
-          if not self._animator.modified:
-            continue
 
-          with tempfile.SpooledTemporaryFile(mode='w+b') as stf:
-            self._animator.frame.save(stf, 'PNG')
-            conn.sendfile(stf)
+      _logger.info('Waiting for the animator to be ready to produce frames...')
+      self._animator.event_ready.wait()
+      _logger.info('... ready!')
+
+      while True:
+        self._connect_and_produce(s)
+
+  def _connect_and_produce(self, s: socket.socket) -> None:
+    _logger.info('Waiting for a client to connect...')
+    try:
+      conn, _ = s.accept()
+      with conn:
+        while True:
+          # Wait for a signal from the client.
+          conn.recv(1)
+
+          # Now wait for the next frame. This could be a few seconds or
+          # immediate, depending on whether the animation is currently static
+          # or in scroll.
+          frame = self._animator.wait_for_new_frame()
+          conn.send(frame.tobytes())
+    except ConnectionError as e:
+      _logger.info('Client disconnected: %s', e)

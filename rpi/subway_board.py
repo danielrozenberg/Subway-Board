@@ -1,8 +1,8 @@
 """Subway Board display code for the Raspberry Pi."""
 
 import itertools
+import logging
 import socket
-import tempfile
 import time
 
 from PIL import Image
@@ -19,33 +19,47 @@ _MATRIX_OPTIONS.brightness = 25
 _MATRIX_OPTIONS.gpio_slowdown = 0
 
 if __name__ == "__main__":
+  logging.basicConfig(level=logging.INFO)
+  logger = logging.getLogger('subway_board.rpi')
+
+  width = _MATRIX_OPTIONS.cols * _MATRIX_OPTIONS.chain_length
+  height = _MATRIX_OPTIONS.rows
+  image_bytes = len('RGB') * width * height
+
+  logger.info('Connecting to LED matrix')
   matrix = rgbmatrix.RGBMatrix(options=_MATRIX_OPTIONS)
+  canvas = matrix.CreateFrameCanvas()
+
+  logger.info('You should see a single white pixel on the top-left corner')
   matrix.SetPixel(0, 0, 255, 255, 255)
 
-  image = Image.new('RGB', (1, 1))
-  canvas = matrix.CreateFrameCanvas()
   while True:
-    with tempfile.SpooledTemporaryFile() as stf:
+    try:
+      logger.info('Connecting to server %r...', _SOCKET_SERVER_ADDRESS)
       s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      try:
-        s.connect(_SOCKET_SERVER_ADDRESS)
-        while True:
-          data = s.recv(2**12)
-          if not data:
-            break
-          stf.write(data)
-        s.close()
+      s.connect(_SOCKET_SERVER_ADDRESS)
 
-        if not stf.tell():
-          time.sleep(0.01)
-          continue
+      logger.info('... connected!')
+      while True:
+        # Tell the server that we are ready.
+        s.send(b'\x00')
 
-        stf.seek(0)
-        image = Image.open(stf)
+        # Read the next image as an uncompressed stream of RGB pixels.
+        data = s.recv(image_bytes)
+        while len(data) < image_bytes:
+          missing_data = s.recv(image_bytes - len(data))
+          if not missing_data:
+            raise EOFError('Image data is incomplete')
+          data += missing_data
+
+        # Parse the image, draw it to the off-screen canvas, and swap the
+        # canvas onto the LED matrix.
+        image = Image.frombytes('RGB', (width, height), data)
         canvas.SetImage(image)
         canvas = matrix.SwapOnVSync(canvas)
-      except (ConnectionRefusedError, OSError):
-        for x, y in itertools.product(range(matrix.width - 4, matrix.width),
-                                      range(matrix.height - 4, matrix.height)):
-          matrix.SetPixel(x, y, *_ERROR_COLOR)
-        time.sleep(1)
+    except (ConnectionError, EOFError) as e:
+      logger.error('Disconnected: %s', e)
+      for x, y in itertools.product(range(matrix.width - 4, matrix.width),
+                                    range(matrix.height - 4, matrix.height)):
+        matrix.SetPixel(x, y, *_ERROR_COLOR)
+      time.sleep(1)

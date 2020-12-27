@@ -30,44 +30,23 @@ class Animator:
         os.path.join(os.path.dirname(__file__), 'images/offline.png'))
 
     self._event_ready = threading.Event()
-    self._modified = True
+    self._event_new_frame = threading.Event()
 
   @property
   def event_ready(self) -> threading.Event:
     return self._event_ready
 
-  @property
-  def modified(self) -> bool:
-    return self._modified
-
-  @property
-  def frame(self) -> Image.Image:
-    """Crops the current frame and returns the resulting image."""
-    if not self._modified:
-      return self._frame
-
-    upper = self._vertical_scroll
-    lower = min(upper + self._height, self._image.height)
-    self._frame.paste(self._image.crop((0, upper, self._width - 1, lower)),
-                      (0, 0))
-
-    if lower - upper < self._height:
-      self._frame.paste(self._image, (0, lower - upper))
-
-    if self._offline:
-      self._frame.paste(self._offline_icon,
-                        (self._frame.width - self._offline_icon.width,
-                         self._frame.height - self._offline_icon.height))
-
-    return self._frame
+  def wait_for_new_frame(self) -> Image.Image:
+    self._event_new_frame.wait()
+    return self._draw()
 
   def mark_offline(self) -> None:
-    self._modified = True
+    self._event_new_frame.set()
     self._offline = True
 
   def replace_image(self, image: Image.Image) -> None:
     """Replaces the full (uncropped) image."""
-    self._modified = True
+    self._event_new_frame.set()
     self._image = image
     self._offline = False
     self._vertical_scroll %= self._image.height
@@ -87,5 +66,23 @@ class Animator:
         self._scroll()
 
   def _scroll(self) -> None:
-    self._modified = True
+    self._event_new_frame.set()
     self._vertical_scroll = (self._vertical_scroll + 1) % self._image.height
+
+  def _draw(self) -> Image.Image:
+    """Crops the current frame and returns the resulting image."""
+    upper = self._vertical_scroll
+    lower = min(upper + self._height, self._image.height)
+    self._frame.paste(self._image.crop((0, upper, self._width - 1, lower)),
+                      (0, 0))
+
+    if lower - upper < self._height:
+      self._frame.paste(self._image, (0, lower - upper))
+
+    if self._offline:
+      self._frame.paste(self._offline_icon,
+                        (self._frame.width - self._offline_icon.width,
+                         self._frame.height - self._offline_icon.height))
+
+    self._event_new_frame.clear()
+    return self._frame
