@@ -39,6 +39,9 @@ class Imager:
     """Draws the full (uncropped) ETAs image."""
     self._load_assets(line_stop.route_id for line_stop in etas)
 
+    if not etas:
+      return Image.new('RGB', (self._width, 16))
+
     image = Image.new('RGB', (self._width, len(etas) * 16))
     draw = ImageDraw.Draw(image)
 
