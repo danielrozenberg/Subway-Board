@@ -30,23 +30,30 @@ class Animator:
         os.path.join(os.path.dirname(__file__), 'images/offline.png'))
 
     self._event_ready = threading.Event()
+    self._modified = True
 
   @property
   def event_ready(self) -> threading.Event:
     return self._event_ready
 
   def mark_offline(self) -> None:
+    self._modified = True
     self._offline = True
 
   def replace_image(self, image: Image.Image) -> None:
     """Replaces the full (uncropped) image."""
+    self._modified = True
     self._image = image
     self._offline = False
     self._vertical_scroll %= self._image.height
     self._event_ready.set()
 
-  def draw(self) -> Image.Image:
+  @property
+  def frame(self) -> Image.Image:
     """Crops the current frame and returns the resulting image."""
+    if not self._modified:
+      return self._frame
+
     upper = self._vertical_scroll
     lower = min(upper + self._height, self._image.height)
     self._frame.paste(self._image.crop((0, upper, self._width - 1, lower)),
@@ -76,4 +83,5 @@ class Animator:
         self._scroll()
 
   def _scroll(self) -> None:
+    self._modified = True
     self._vertical_scroll = (self._vertical_scroll + 1) % self._image.height
