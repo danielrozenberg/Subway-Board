@@ -43,6 +43,7 @@ class Server:
         self._connect_and_produce(s)
 
   def _connect_and_produce(self, s: socket.socket) -> None:
+    """Connects with the client and produces image bytes for it."""
     _logger.info('Waiting for a client to connect...')
     try:
       conn, _ = s.accept()
