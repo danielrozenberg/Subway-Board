@@ -23,6 +23,7 @@ if __name__ == "__main__":
   matrix.SetPixel(0, 0, 255, 255, 255)
 
   image = Image.new('RGB', (1, 1))
+  canvas = matrix.CreateFrameCanvas()
   while True:
     with tempfile.SpooledTemporaryFile() as stf:
       s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,9 +42,8 @@ if __name__ == "__main__":
 
         stf.seek(0)
         image = Image.open(stf)
-        canvas = matrix.CreateFrameCanvas()
         canvas.SetImage(image)
-        matrix.SwapOnVSync(canvas)
+        canvas = matrix.SwapOnVSync(canvas)
       except (ConnectionRefusedError, OSError):
         for x, y in itertools.product(range(matrix.width - 4, matrix.width),
                                       range(matrix.height - 4, matrix.height)):
