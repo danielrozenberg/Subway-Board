@@ -26,7 +26,7 @@ class Direction(enum.Enum):
     return NotImplemented
 
 
-@dataclasses.dataclass(frozen=True, order=True)
+@dataclasses.dataclass(frozen=True)
 class LineStop:
   stop_id: str
   route_id: str

@@ -4,7 +4,6 @@ import logging
 
 import animation
 import deduper
-import imaging
 import options
 import serving
 import networking
@@ -16,15 +15,14 @@ if __name__ == '__main__':
   updater = networking.Updater(options.MTA_API_ACCESS_KEY,
                                set(options.STOP_IDS_TO_NAMES),
                                options.ETA_RANGE)
-  imager = imaging.Imager(options.WIDTH, options.STOP_IDS_TO_NAMES)
   animator = animation.Animator(options.WIDTH, options.HEIGHT,
-                                options.ROW_INTERVAL, options.SCROLL_INTERVAL)
+                                options.ROW_INTERVAL, options.SCROLL_INTERVAL,
+                                options.STOP_IDS_TO_NAMES)
   server = serving.Server(options.PORT, animator)
 
   def on_update(etas: LineStopEtaMapping) -> None:
     deduper.dedup(etas, options.DEDUPING_PREFERENCES)
-    image = imager.draw(etas)
-    animator.replace_image(image)
+    animator.update_etas(etas)
 
   def on_error(_: Exception) -> None:
     animator.mark_offline()

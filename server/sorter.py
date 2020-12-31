@@ -1,36 +1,46 @@
 """Sorts the lines by user-chosen order."""
 
-import dataclasses
 import itertools
-from typing import Generator, Mapping, Sequence, Tuple
+from typing import Generator, Sequence
 
+import constants
 import networking
 from networking import LineStopEtaMapping
 
 
-@dataclasses.dataclass(frozen=True, order=True)
-class NamedLineStop(networking.LineStop):
-  stop_name: str
+class Sorter:
+  """Helper for sorting the lines."""
 
-  @classmethod
-  def from_line_stop(cls, line_stop: networking.LineStop,
-                     stop_names: Mapping[str, str]) -> 'NamedLineStop':
-    return cls(stop_id=line_stop.stop_id,
-               route_id=line_stop.route_id,
-               direction=line_stop.direction,
-               stop_name=stop_names[line_stop.stop_id])
+  def __init__(self, stop_ids: Sequence[str]):
+    self._stop_ids = stop_ids
 
+  @property
+  def initial_line_stop(self) -> networking.LineStop:
+    return next(self._all_possible_line_stops())
 
-def by_order(
-    etas: LineStopEtaMapping, stop_names: Mapping[str, str]
-) -> Generator[Tuple[NamedLineStop, Sequence[int]], None, None]:
-  """Yields the resulting lines by preference."""
+  def next_in_after(
+      self, etas: LineStopEtaMapping,
+      current_line_stop: networking.LineStop) -> networking.LineStop:
+    """Returns the next LineStop available in etas after current_line_stop."""
+    all_possible_line_stops = self._all_possible_line_stops()
+    # Iterate the generator until we find the current LineStop in it.
+    while next(all_possible_line_stops) != current_line_stop:
+      pass
 
-  for route_id, direction, stop_id in itertools.product(
-      '123456ACEGBDFMJZNQRWLS', networking.Direction, stop_names):
-    line_stop = networking.LineStop(stop_id=stop_id,
-                                    route_id=route_id,
-                                    direction=direction)
-    if line_stop in etas:
-      named_line_stop = NamedLineStop.from_line_stop(line_stop, stop_names)
-      yield named_line_stop, etas[line_stop]
+    # Now continue to iterate it until we find a LineStop that exists in etas.
+    return next(
+        (line_stop for line_stop in all_possible_line_stops
+         if line_stop in etas),
+        current_line_stop,
+    )
+
+  def _all_possible_line_stops(
+      self) -> Generator[networking.LineStop, None, None]:
+    # Repeat twice in case the next available line is before the current one in
+    # the producer.
+    for _ in range(2):
+      for route_id, direction, stop_id in itertools.product(
+          constants.ROUTE_IDS, networking.Direction, self._stop_ids):
+        yield networking.LineStop(stop_id=stop_id,
+                                  route_id=route_id,
+                                  direction=direction)
