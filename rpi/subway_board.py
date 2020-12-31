@@ -57,7 +57,7 @@ if __name__ == "__main__":
         image = Image.frombytes('RGB', (width, height), data)
         canvas.SetImage(image)
         canvas = matrix.SwapOnVSync(canvas)
-    except (ConnectionError, EOFError) as e:
+    except (EOFError, OSError) as e:
       logger.error('Disconnected: %s', e)
       for x, y in itertools.product(range(matrix.width - 4, matrix.width),
                                     range(matrix.height - 4, matrix.height)):
