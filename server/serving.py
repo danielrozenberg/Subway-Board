@@ -21,6 +21,7 @@ class Server:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       _logger.info('Verifying that the socket can be bound to port %d...',
                    self._port)
+      s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       s.bind(('0.0.0.0', self._port))
       _logger.info('... verified!')
 
@@ -32,6 +33,7 @@ class Server:
     """Serves the current frame on any socket connection."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       _logger.info('Listening on port %d', self._port)
+      s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       s.bind(('0.0.0.0', self._port))
       s.listen()
 
