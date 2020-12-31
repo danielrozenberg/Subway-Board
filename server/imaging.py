@@ -53,7 +53,7 @@ class Imager:
         image.paste(self._image_assets['up'], (18, row_y_start + 4))
       else:
         image.paste(self._image_assets['down'], (18, row_y_start + 4))
-      minutes_text = ', '.join(str(m) for m in sorted(minutes)[:3])
+      minutes_text = ' • '.join(str(m) for m in sorted(minutes)[:3])
 
       draw.text((32, row_y_start + 1),
                 named_line_stop.stop_name,
