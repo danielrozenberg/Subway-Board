@@ -147,7 +147,8 @@ class Animator:
     if self._offline:
       self._frame.paste(self._offline_icon,
                         (self._frame.width - self._offline_icon.width,
-                         self._frame.height - self._offline_icon.height))
+                         self._frame.height - self._offline_icon.height),
+                        self._offline_icon)
 
     self._event_new_frame.clear()
     return self._frame
@@ -161,8 +162,11 @@ class Animator:
     minutes = self._etas[line_stop]
     draw = ImageDraw.Draw(image)
 
-    image.paste(self._route_icons[line_stop.route_id], (0, 0))
-    image.paste(self._arrow_icons[line_stop.direction], (18, 4))
+    route_icon = self._route_icons[line_stop.route_id]
+    arrow_icon = self._arrow_icons[line_stop.direction]
+
+    image.paste(route_icon, (0, 0), route_icon)
+    image.paste(arrow_icon, (18, 4), arrow_icon)
 
     minutes_text = ' • '.join(str(m) for m in sorted(minutes)[:3])
     draw.text((32, 1),
