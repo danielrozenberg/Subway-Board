@@ -11,6 +11,7 @@ import logging
 import time
 from typing import Callable, DefaultDict, List
 
+from google.protobuf import message
 from google.transit import gtfs_realtime_pb2
 import requests
 
@@ -85,8 +86,11 @@ class Updater:
           etas = future.result(timeout=_FETCH_TIMEOUT_SECS)
           _logger.info('Fetched updates for %d line/stops', len(etas))
           on_update(etas)
-        except (futures.TimeoutError,
-                requests.exceptions.RequestException) as e:
+        except (
+            futures.TimeoutError,
+            message.DecodeError,
+            requests.exceptions.RequestException,
+        ) as e:
           _logger.exception('Failed to fetch updates')
           on_error(e)
 
