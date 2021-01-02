@@ -1,7 +1,7 @@
 """Subway Board display code for the Raspberry Pi."""
 
-import itertools
 import logging
+import os
 import socket
 import time
 
@@ -25,6 +25,10 @@ if __name__ == "__main__":
   width = _MATRIX_OPTIONS.cols * _MATRIX_OPTIONS.chain_length
   height = _MATRIX_OPTIONS.rows
   image_bytes = len('RGB') * width * height
+
+  offline_icon = Image.open(
+      os.path.join(os.path.dirname(__file__),
+                   '../server/images/offline.png')).convert('RGB')
 
   logger.info('Connecting to LED matrix')
   matrix = rgbmatrix.RGBMatrix(options=_MATRIX_OPTIONS)
@@ -59,7 +63,6 @@ if __name__ == "__main__":
         canvas = matrix.SwapOnVSync(canvas)
     except (EOFError, OSError) as e:
       logger.error('Disconnected: %s', e)
-      for x, y in itertools.product(range(matrix.width - 4, matrix.width),
-                                    range(matrix.height - 4, matrix.height)):
-        matrix.SetPixel(x, y, *_ERROR_COLOR)
+      matrix.SetImage(offline_icon, matrix.width - offline_icon.width,
+                      matrix.height - offline_icon.height)
       time.sleep(1)
