@@ -27,8 +27,7 @@ if __name__ == "__main__":
   image_bytes = len('RGB') * width * height
 
   offline_icon = Image.open(
-      os.path.join(os.path.dirname(__file__),
-                   '../server/images/offline.png')).convert('RGB')
+      os.path.join(os.path.dirname(__file__), 'offline.png')).convert('RGB')
 
   logger.info('Connecting to LED matrix')
   matrix = rgbmatrix.RGBMatrix(options=_MATRIX_OPTIONS)
