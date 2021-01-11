@@ -52,7 +52,10 @@ class Server:
       with conn:
         while True:
           # Wait for a signal from the client.
-          conn.recv(1)
+          byte = conn.recv(1)
+          if not byte:
+            _logger.info('Client disconnected')
+            return
 
           # Now wait for the next frame. This could be a few seconds or
           # immediate, depending on whether the animation is currently static
@@ -60,4 +63,4 @@ class Server:
           frame = self._animator.wait_for_new_frame()
           conn.send(frame.tobytes())
     except ConnectionError as e:
-      _logger.info('Client disconnected: %s', e)
+      _logger.error('Connection error: %s', e)
