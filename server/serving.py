@@ -1,7 +1,7 @@
 """Socket server."""
 
 import logging
-import socket
+import socketserver
 import threading
 
 import animation
@@ -11,6 +11,11 @@ _PORT = 7829
 _logger = logging.getLogger('subway_board.serving')
 
 
+class _TCPServer(socketserver.TCPServer):
+
+  allow_reuse_address = True
+
+
 class Server:
   """Socket server that sends current frame from ETA image on every connection."""
 
@@ -18,12 +23,30 @@ class Server:
     self._port = port
     self._animator = animator
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-      _logger.info('Verifying that the socket can be bound to port %d...',
-                   self._port)
-      s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-      s.bind(('0.0.0.0', self._port))
-      _logger.info('... verified!')
+    class Handler(socketserver.StreamRequestHandler):
+      """Handle TCP requests."""
+
+      def setup(self) -> None:
+        super().setup()
+        _logger.info('Client %s connected', self.client_address)
+        self._animator = animator
+
+      def handle(self) -> None:
+        try:
+          while True:
+            # Wait for the client to send a newline, indicating it's ready for
+            # the next frame.
+            self.rfile.readline()
+
+            # Now wait for the next frame before sending data. This could be a
+            # few seconds or immediate, depending on whether the animation is
+            # currently static or in scroll.
+            frame = self._animator.wait_for_new_frame()
+            self.wfile.write(frame.tobytes())
+        except ConnectionError as e:
+          _logger.error('Connection error: %s', e)
+
+    self._handler_class = Handler
 
   def start(self) -> None:
     """Starts the socket server in a background thread."""
@@ -31,36 +54,10 @@ class Server:
 
   def _start(self) -> None:
     """Serves the current frame on any socket connection."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    _logger.info('Waiting for the animator to be ready to produce frames...')
+    self._animator.event_ready.wait()
+    _logger.info('... ready!')
+
+    with _TCPServer(('0.0.0.0', self._port), self._handler_class) as server:
       _logger.info('Listening on port %d', self._port)
-      s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-      s.bind(('0.0.0.0', self._port))
-      s.listen()
-
-      _logger.info('Waiting for the animator to be ready to produce frames...')
-      self._animator.event_ready.wait()
-      _logger.info('... ready!')
-
-      while True:
-        self._connect_and_produce(s)
-
-  def _connect_and_produce(self, s: socket.socket) -> None:
-    """Connects with the client and produces image bytes for it."""
-    _logger.info('Waiting for a client to connect...')
-    try:
-      conn, _ = s.accept()
-      with conn:
-        while True:
-          # Wait for a signal from the client.
-          byte = conn.recv(1)
-          if not byte:
-            _logger.info('Client disconnected')
-            return
-
-          # Now wait for the next frame. This could be a few seconds or
-          # immediate, depending on whether the animation is currently static
-          # or in scroll.
-          frame = self._animator.wait_for_new_frame()
-          conn.send(frame.tobytes())
-    except ConnectionError as e:
-      _logger.error('Connection error: %s', e)
+      server.serve_forever()

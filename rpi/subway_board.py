@@ -39,29 +39,27 @@ if __name__ == "__main__":
   while True:
     try:
       logger.info('Connecting to server %r...', _SOCKET_SERVER_ADDRESS)
-      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      s.connect(_SOCKET_SERVER_ADDRESS)
+      with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(_SOCKET_SERVER_ADDRESS)
+        while True:
+          # Tell the server that we are ready.
+          s.send(b'\n')
 
-      logger.info('... connected!')
-      while True:
-        # Tell the server that we are ready.
-        s.send(b'\x00')
+          # Read the next image as an uncompressed stream of RGB pixels.
+          data = s.recv(image_bytes)
+          while len(data) < image_bytes:
+            missing_data = s.recv(image_bytes - len(data))
+            if not missing_data:
+              raise EOFError('Image data is incomplete')
+            data += missing_data
 
-        # Read the next image as an uncompressed stream of RGB pixels.
-        data = s.recv(image_bytes)
-        while len(data) < image_bytes:
-          missing_data = s.recv(image_bytes - len(data))
-          if not missing_data:
-            raise EOFError('Image data is incomplete')
-          data += missing_data
-
-        # Parse the image, draw it to the off-screen canvas, and swap the
-        # canvas onto the LED matrix.
-        image = Image.frombytes('RGB', (width, height), data)
-        canvas.SetImage(image)
-        canvas = matrix.SwapOnVSync(canvas)
+          # Parse the image, draw it to the off-screen canvas, and swap the
+          # canvas onto the LED matrix.
+          image = Image.frombytes('RGB', (width, height), data)
+          canvas.SetImage(image)
+          canvas = matrix.SwapOnVSync(canvas)
     except (EOFError, OSError) as e:
-      logger.error('Disconnected: %s', e)
+      logger.exception('Disconnected: %s', e)
       matrix.SetImage(offline_icon, matrix.width - offline_icon.width,
                       matrix.height - offline_icon.height)
       time.sleep(1)
