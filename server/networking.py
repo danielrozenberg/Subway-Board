@@ -12,7 +12,8 @@ import time
 from typing import Callable, DefaultDict, List
 
 from google.protobuf import message
-from google.transit import gtfs_realtime_pb2
+import gtfs_realtime_pb2
+import nyct_subway_pb2
 import requests
 
 
