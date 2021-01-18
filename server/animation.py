@@ -13,12 +13,16 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 import constants
-import networking
-from networking import LineStop, LineStopEtaMapping
+from entities import Direction, LineStop, LineStopEtaMapping
 import sorter
 
 _LINE_HEIGHT = 16
 _FONT_SIZE = 11
+
+_COLOR_STOP_NAME = 0xbbbbbb
+_COLOR_ETA_MINUTES_ASSIGNED = 0xffffff
+_COLOR_ETA_MINUTES_UNASSIGNED = 0x999999
+_COLOR_ETA_MINUTES_SEPARATOR = 0xffffff
 
 _logger = logging.getLogger('subway_board.animator')
 
@@ -71,7 +75,7 @@ class Animator:
         os.path.join(directory, 'images/offline.png'))
 
     self._arrow_icons = {}
-    for direction in networking.Direction:
+    for direction in Direction:
       filepath = os.path.join(directory, 'images',
                               f'arrow_{direction.value}.png')
       self._arrow_icons[direction] = Image.open(filepath)
@@ -159,7 +163,6 @@ class Animator:
     if line_stop not in self._etas:
       return image
 
-    minutes = self._etas[line_stop]
     draw = ImageDraw.Draw(image)
 
     route_icon = self._route_icons[line_stop.route_id]
@@ -168,15 +171,25 @@ class Animator:
     image.paste(route_icon, (0, 0), route_icon)
     image.paste(arrow_icon, (18, 4), arrow_icon)
 
-    minutes_text = ' • '.join(str(m) for m in sorted(minutes)[:3])
     draw.text((32, 1),
               self._stop_names[line_stop.stop_id],
-              fill=0xbbbbbb,
+              fill=_COLOR_STOP_NAME,
               font=self._stop_name_font)
-    draw.text((self._width - 2, 1),
-              minutes_text,
-              fill=0xffffff,
-              font=self._eta_font,
-              anchor='ra')
+
+    right_edge = self._width - 2
+    for eta in reversed(sorted(self._etas[line_stop])[:3]):
+      draw.text((right_edge, 1),
+                str(eta.minutes),
+                fill=(_COLOR_ETA_MINUTES_ASSIGNED
+                      if eta.is_assigned else _COLOR_ETA_MINUTES_UNASSIGNED),
+                font=self._eta_font,
+                anchor='ra')
+      draw.text((right_edge, 1),
+                ' • ',
+                fill=_COLOR_ETA_MINUTES_SEPARATOR,
+                font=self._eta_font,
+                anchor='la')
+
+      right_edge -= draw.textlength(f'{eta.minutes} • ', font=self._eta_font)
 
     return image

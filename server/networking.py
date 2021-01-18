@@ -2,40 +2,18 @@
 
 import collections
 import collections.abc
-import enum
 from concurrent import futures
-import dataclasses
 import datetime
-import functools
 import logging
 import time
-from typing import Callable, DefaultDict, List
+from typing import Callable
 
 from google.protobuf import message
 import gtfs_realtime_pb2
 import nyct_subway_pb2
 import requests
 
-
-@functools.total_ordering
-class Direction(enum.Enum):
-  NORTHBOUND = 'N'
-  SOUTHBOUND = 'S'
-
-  def __lt__(self, other: 'Direction') -> bool:
-    if isinstance(other, Direction):
-      return str(self.value) < str(other.value)
-    return NotImplemented
-
-
-@dataclasses.dataclass(frozen=True)
-class LineStop:
-  stop_id: str
-  route_id: str
-  direction: Direction
-
-
-LineStopEtaMapping = DefaultDict[LineStop, List[int]]
+from entities import Direction, Eta, LineStop, LineStopEtaMapping
 
 _FETCH_TIMEOUT_SECS = 30
 
@@ -129,14 +107,17 @@ class Updater:
       if not stop_time_update.departure.time:
         continue
 
-      eta = int(
+      minutes = int(
           (datetime.datetime.fromtimestamp(stop_time_update.departure.time) -
            now).total_seconds()) // 60
-      if eta not in self._eta_range:
+      if minutes not in self._eta_range:
         continue
 
       route_id: str = entity.trip_update.trip.route_id
       line_stop = LineStop(stop_id=stop_id,
                            route_id=route_id,
                            direction=direction)
-      etas[line_stop].append(eta)
+
+      is_assigned = entity.trip_update.trip.Extensions[
+          nyct_subway_pb2.nyct_trip_descriptor].is_assigned
+      etas[line_stop].append(Eta(minutes=minutes, is_assigned=is_assigned))
