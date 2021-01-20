@@ -26,25 +26,12 @@ class Server:
     class Handler(socketserver.StreamRequestHandler):
       """Handle TCP requests."""
 
-      def setup(self) -> None:
-        super().setup()
-        _logger.info('Client %s connected', self.client_address)
-        self._animator = animator
-
       def handle(self) -> None:
-        try:
-          while True:
-            # Wait for the client to send a newline, indicating it's ready for
-            # the next frame.
-            self.rfile.readline()
-
-            # Now wait for the next frame before sending data. This could be a
-            # few seconds or immediate, depending on whether the animation is
-            # currently static or in scroll.
-            frame = self._animator.wait_for_new_frame()
-            self.wfile.write(frame.tobytes())
-        except ConnectionError as e:
-          _logger.error('Connection error: %s', e)
+        # Now wait for the next frame before sending data. This could be a
+        # few seconds or immediate, depending on whether the animation is
+        # currently static or in scroll.
+        frame = animator.wait_for_new_frame()
+        self.wfile.write(frame.tobytes())
 
     self._handler_class = Handler
 
