@@ -63,7 +63,6 @@ class Updater:
         future = executor.submit(self._fetch)
         try:
           etas = future.result(timeout=_FETCH_TIMEOUT_SECS)
-          _logger.info('Fetched updates for %d line/stops', len(etas))
           on_update(etas)
         except (
             futures.TimeoutError,
@@ -73,14 +72,10 @@ class Updater:
           _logger.exception('Failed to fetch updates')
           on_error(e)
 
-        _logger.info('Sleeping for %d seconds', self._refresh_interval_secs)
         time.sleep(self._refresh_interval_secs)
 
   def _fetch(self) -> LineStopEtaMapping:
     """Fetches real-time data for all stops."""
-    _logger.info('Fetching real-time updates from %d feeds',
-                 len(_REAL_TIME_FEED_URLS))
-
     etas: LineStopEtaMapping = collections.defaultdict(list)
     for feed_url in _REAL_TIME_FEED_URLS:
       response = requests.get(feed_url, headers={'x-api-key': self._api_key})
