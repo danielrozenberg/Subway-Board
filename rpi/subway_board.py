@@ -24,7 +24,6 @@ if __name__ == "__main__":
 
   width = _MATRIX_OPTIONS.cols * _MATRIX_OPTIONS.chain_length
   height = _MATRIX_OPTIONS.rows
-  image_bytes = len('RGB') * width * height
 
   offline_icon = Image.open(
       os.path.join(os.path.dirname(__file__), 'offline.png')).convert('RGB')
@@ -39,18 +38,11 @@ if __name__ == "__main__":
   logger.info('Connecting to server %r...', _SERVER_ADDRESS)
   while True:
     try:
-      with socket.create_connection(_SERVER_ADDRESS, _TIMEOUT) as s:
-        # Read the next image as an uncompressed stream of RGB pixels.
-        data = s.recv(image_bytes)
-        while len(data) < image_bytes:
-          missing_data = s.recv(image_bytes - len(data))
-          if not missing_data:
-            raise EOFError('Image data is incomplete')
-          data += missing_data
-
+      with socket.create_connection(_SERVER_ADDRESS, _TIMEOUT) as s, \
+          s.makefile('rb') as fp:
         # Parse the image, draw it to the off-screen canvas, and swap the
         # canvas onto the LED matrix.
-        image = Image.frombytes('RGB', (width, height), data)
+        image = Image.open(fp)
         canvas.SetImage(image)
         canvas = matrix.SwapOnVSync(canvas)
     except (EOFError, OSError) as e:

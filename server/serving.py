@@ -31,7 +31,7 @@ class Server:
         # few seconds or immediate, depending on whether the animation is
         # currently static or in scroll.
         frame = animator.wait_for_new_frame()
-        self.wfile.write(frame.tobytes())
+        frame.save(self.wfile, 'PNG', optimize=True)
 
     self._handler_class = Handler
 
