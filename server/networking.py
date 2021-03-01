@@ -2,7 +2,6 @@
 
 import collections
 import collections.abc
-from concurrent import futures
 import datetime
 import logging
 import time
@@ -58,27 +57,23 @@ class Updater:
           on_error: Callable[[Exception], None]) -> None:
     """Runs the updater; blocking call."""
     _logger.info('Starting Updater for stops %r', self._stop_ids)
-    with futures.ThreadPoolExecutor(max_workers=1) as executor:
-      while True:
-        future = executor.submit(self._fetch)
-        try:
-          etas = future.result(timeout=_FETCH_TIMEOUT_SECS)
-          on_update(etas)
-        except (
-            futures.TimeoutError,
-            message.DecodeError,
-            requests.exceptions.RequestException,
-        ) as e:
-          _logger.exception('Failed to fetch updates')
-          on_error(e)
+    while True:
+      try:
+        etas = self._fetch()
+        on_update(etas)
+      except (message.DecodeError, requests.exceptions.RequestException) as e:
+        _logger.exception('Failed to fetch updates')
+        on_error(e)
 
-        time.sleep(self._refresh_interval_secs)
+      time.sleep(self._refresh_interval_secs)
 
   def _fetch(self) -> LineStopEtaMapping:
     """Fetches real-time data for all stops."""
     etas: LineStopEtaMapping = collections.defaultdict(list)
     for feed_url in _REAL_TIME_FEED_URLS:
-      response = requests.get(feed_url, headers={'x-api-key': self._api_key})
+      response = requests.get(feed_url,
+                              headers={'x-api-key': self._api_key},
+                              timeout=_FETCH_TIMEOUT_SECS)
       feed = gtfs_realtime_pb2.FeedMessage.FromString(response.content)  # pylint: disable=no-member
       for entity in feed.entity:
         self._process(entity, etas)
