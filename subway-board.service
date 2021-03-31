@@ -1,0 +1,13 @@
+[Unit]
+Description=Subway Board
+After=network.target
+
+[Service]
+User=root
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/Subway-Board/rpi/subway_board.py
+ExecStop=/bin/kill -s STOP $MAINPID
+ExecReload=/bin/kill -s HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
