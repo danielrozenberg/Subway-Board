@@ -17,6 +17,7 @@ _MATRIX_OPTIONS.cols = 64
 _MATRIX_OPTIONS.chain_length = 2
 _MATRIX_OPTIONS.brightness = 25
 _MATRIX_OPTIONS.gpio_slowdown = 0
+_MATRIX_OPTIONS.hardware_mapping = 'adafruit-hat-pwm'
 
 if __name__ == "__main__":
   logging.basicConfig(level=logging.INFO)
