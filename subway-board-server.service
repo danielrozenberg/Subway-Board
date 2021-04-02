@@ -1,0 +1,14 @@
+[Unit]
+Description=Subway Board Server
+After=network.target
+
+[Service]
+User=pi
+Type=simple
+Environment="PYTHONPATH=/home/pi/Subway-Board/server/third_party/proto"
+ExecStart=/home/pi/.pyenv/versions/subway-board/bin/python /home/pi/Subway-Board/server
+ExecStop=/bin/kill -s STOP $MAINPID
+ExecReload=/bin/kill -s HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
