@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=root
 Type=simple
-ExecStart=/usr/bin/python3 /home/pi/Subway-Board/led_controller/subway_board.py
+ExecStart=/usr/bin/python3 /home/pi/Subway-Board/led_controller
 ExecStop=/bin/kill -s STOP $MAINPID
 ExecReload=/bin/kill -s HUP $MAINPID
 
