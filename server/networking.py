@@ -18,8 +18,7 @@ _FETCH_TIMEOUT_SECS = 30
 
 _REAL_TIME_FEED_BASE_URL = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs'
 _REAL_TIME_FEED_URLS = (
-    _REAL_TIME_FEED_BASE_URL,  # 123456
-    f'{_REAL_TIME_FEED_BASE_URL}-7',
+    _REAL_TIME_FEED_BASE_URL,  # 1234567
     f'{_REAL_TIME_FEED_BASE_URL}-ace',
     f'{_REAL_TIME_FEED_BASE_URL}-bdfm',
     f'{_REAL_TIME_FEED_BASE_URL}-g',
