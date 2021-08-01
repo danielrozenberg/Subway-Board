@@ -38,7 +38,7 @@ def get_initial_values() -> Initial:
 def _get_initial_sunrise() -> datetime.datetime:
   sunrise_today = SUN.get_sunrise_time()
   sunrise_tomorrow = get_sunrise_tomorrow()
-  if sunrise_today < datetime.datetime.utcnow():
+  if datetime.datetime.now(datetime.timezone.utc) < sunrise_today:
     return sunrise_today
   return sunrise_tomorrow
 
@@ -46,6 +46,6 @@ def _get_initial_sunrise() -> datetime.datetime:
 def _get_initial_sunset() -> datetime.datetime:
   sunset_today = SUN.get_sunset_time()
   sunset_tomorrow = get_sunset_tomorrow()
-  if sunset_today < datetime.datetime.utcnow():
+  if datetime.datetime.now(datetime.timezone.utc) < sunset_today:
     return sunset_today
   return sunset_tomorrow
