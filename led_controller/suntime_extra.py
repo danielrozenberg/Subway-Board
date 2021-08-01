@@ -32,7 +32,7 @@ def get_initial_values() -> Initial:
   sunset = _get_initial_sunset()
   brightness = (options.NIGHTTIME_BRIGHTNESS
                 if sunrise < sunset else options.DAYTIME_BRIGHTNESS)
-  return Initial(sunrise, sunrise, brightness)
+  return Initial(sunrise, sunset, brightness)
 
 
 def _get_initial_sunrise() -> datetime.datetime:

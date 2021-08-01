@@ -38,14 +38,17 @@ if __name__ == "__main__":
 
   def handle_sun_event(new_brightness: int,
                        next_sun_event_function: SunEventTimeFunction):
+    """Changes the matrix brightness and schedules the same event in a day."""
     logging.info('Changing brightness to %d', new_brightness)
     matrix.brightness = new_brightness
-    schedule_next_sun_event(next_sun_event_function(), next_sun_event_function,
+    schedule_at = next_sun_event_function()
+    schedule_next_sun_event(schedule_at, next_sun_event_function,
                             new_brightness)
 
   def schedule_next_sun_event(scheduled_at: datetime.datetime,
                               next_sun_event_function: SunEventTimeFunction,
                               brightness: int) -> None:
+    """Schedules a brightness-change event based on sunrise/sunset."""
     scheduled_at_timedelta = scheduled_at - datetime.datetime.now(
         datetime.timezone.utc)
     logging.info('Scheduling next brightness change (%d) event for %r (in %r)',
