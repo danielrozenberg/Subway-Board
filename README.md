@@ -26,7 +26,7 @@ Do the hardware setup as described on
   - My wifi SSID has emojis, so I needed to
     [convert it to hex](https://raspberrypi.stackexchange.com/a/68661)
 - Update the OS `sudo apt update && sudo apt upgrade`
-- Install dependencies `sudo apt install git python3-dev python3-pil`
+- Install dependencies `sudo apt install git python3-dev python3-pil python3-pip`
 - `sudo raspi-config`
   - System Settings → Hostname → Choose a hostname
   - Localisation Options → Locale
@@ -37,6 +37,7 @@ Do the hardware setup as described on
 - [Set up Python 3 as the default](https://linuxconfig.org/how-to-change-from-default-to-alternative-python-version-on-debian-linux)
 - [Install the LED Matrix Python binding](https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi/driving-matrices)
   (step 6)
+- `pip3 install suntime`
 
 ## Controller
 
