@@ -37,7 +37,7 @@ Do the hardware setup as described on
 - [Set up Python 3 as the default](https://linuxconfig.org/how-to-change-from-default-to-alternative-python-version-on-debian-linux)
 - [Install the LED Matrix Python binding](https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi/driving-matrices)
   (step 6)
-- `pip3 install suntime`
+- `sudo pip3 install suntime`
 
 ## Controller
 
