@@ -40,9 +40,11 @@ if __name__ == "__main__":
                        next_sun_event_function: SunEventTimeFunction):
     logging.info('Changing brightness to %d', new_brightness)
     matrix.brightness = new_brightness
-    schedule_next_sun_event(next_sun_event_function(), new_brightness)
+    schedule_next_sun_event(next_sun_event_function(), next_sun_event_function,
+                            new_brightness)
 
   def schedule_next_sun_event(scheduled_at: datetime.datetime,
+                              next_sun_event_function: SunEventTimeFunction,
                               brightness: int) -> None:
     scheduled_at_timedelta = scheduled_at - datetime.datetime.now(
         datetime.timezone.utc)
@@ -50,12 +52,14 @@ if __name__ == "__main__":
                  brightness, scheduled_at, scheduled_at_timedelta)
     scheduled_timer = threading.Timer(scheduled_at_timedelta.total_seconds(),
                                       handle_sun_event,
-                                      (brightness, scheduled_at_timedelta))
+                                      (brightness, next_sun_event_function))
     scheduled_timer.daemon = True
     scheduled_timer.start()
 
-  schedule_next_sun_event(initial.sunrise, options.DAYTIME_BRIGHTNESS)
-  schedule_next_sun_event(initial.sunset, options.NIGHTTIME_BRIGHTNESS)
+  schedule_next_sun_event(initial.sunrise, suntime_extra.get_sunrise_tomorrow,
+                          options.DAYTIME_BRIGHTNESS)
+  schedule_next_sun_event(initial.sunset, suntime_extra.get_sunset_tomorrow,
+                          options.NIGHTTIME_BRIGHTNESS)
 
   logger.info('Connecting to server %r...', options.SERVER_ADDRESS)
   while True:
