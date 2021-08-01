@@ -39,7 +39,7 @@ if __name__ == "__main__":
   def handle_sun_event(new_brightness: int,
                        next_sun_event_function: SunEventTimeFunction):
     """Changes the matrix brightness and schedules the same event in a day."""
-    logging.info('Changing brightness to %d', new_brightness)
+    logger.info('Changing brightness to %d', new_brightness)
     matrix.brightness = new_brightness
     schedule_at = next_sun_event_function()
     schedule_next_sun_event(schedule_at, next_sun_event_function,
@@ -51,8 +51,8 @@ if __name__ == "__main__":
     """Schedules a brightness-change event based on sunrise/sunset."""
     scheduled_at_timedelta = scheduled_at - datetime.datetime.now(
         datetime.timezone.utc)
-    logging.info('Scheduling next brightness change (%d) event for %r (in %r)',
-                 brightness, scheduled_at, scheduled_at_timedelta)
+    logger.info('Scheduling next brightness change (%d) event for %r (in %r)',
+                brightness, scheduled_at, scheduled_at_timedelta)
     scheduled_timer = threading.Timer(scheduled_at_timedelta.total_seconds(),
                                       handle_sun_event,
                                       (brightness, next_sun_event_function))
