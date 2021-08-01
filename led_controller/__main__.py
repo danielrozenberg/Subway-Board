@@ -44,7 +44,8 @@ if __name__ == "__main__":
 
   def schedule_next_sun_event(scheduled_at: datetime.datetime,
                               brightness: int) -> None:
-    scheduled_at_timedelta = scheduled_at - datetime.datetime.utcnow()
+    scheduled_at_timedelta = scheduled_at - datetime.datetime.now(
+        datetime.timezone.utc)
     logging.info('Scheduling next brightness change (%d) event for %r (in %r)',
                  brightness, scheduled_at, scheduled_at_timedelta)
     scheduled_timer = threading.Timer(scheduled_at_timedelta.total_seconds(),
