@@ -2,6 +2,8 @@
 
 Displays subway ETA for nearby stations. Ask me if you're curious!
 
+![](./demo.gif)
+
 # Hardware
 
 Designed to work with the Raspberry Pi RGB LED Matrix HAT and two 64×32 matrices
